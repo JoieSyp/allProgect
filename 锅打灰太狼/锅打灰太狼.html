@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>Document</title>
+	<style type="text/css">
+	*{ margin:0; padding:0; font-family:"微软雅黑";}
+	#outer{ background:url(img/game_bg.jpg) 0 0 no-repeat; height:480px; width:320px; position:relative;}
+	#scoring{ position:absolute; font-weight:bold; font-size:16px; color:white; left:65px; top:13px;}
+	#countDown{ position:absolute; background:url(img/progress.png) 0 0 no-repeat; width:180px; height:16px; left: 63px;top: 66px;}
+	#wolfs img{ position:absolute;}
+	#menu{ position:absolute; width:320px; text-align:center; left:0; top:200px;font-size: 26px;color:red;font-weight: bold;text-shadow: 0 0 5px  #FFFF00;}
+	#start,#handle,#gameOver{ line-height:50px; font-size:30px; font-weight:bold; color:#F60; text-shadow:0 0 5px #FFFF00; display:block; text-decoration:none;}
+	#gameOver{ position:absolute; width:320px; text-align:center; top:200px; left:0; display:none;}
+	</style>
+	
+	<script>
+		
+	window.onload=function(){
+		var outer=document.getElementById("outer");
+		var scoring=document.getElementById("scoring");
+		var countDown=document.getElementById("countDown");
+		var wolfs=document.getElementById("wolfs");
+		var menu=document.getElementById("menu");
+		var start=document.getElementById("start");
+		var gameOver=document.getElementById("gameOver");
+
+		//灰太狼随机出现的位置
+		var arrPos=[{l:"98px",t:"115px"},{l:"17px",t:"160px"},{l:"15px",t:"220px"},{l:"30px",t:"293px"},{l:"122px",t:"273px"},{l:"207px",t:"295px"},{l:"200px",t:"211px"},{l:"187px",t:"141px"},{l:"100px",t:"185px"}];
+        var score=0;
+        var countOffw=countDown.offsetWidth;
+		start.onclick=function(){
+             
+			menu.style.display="none";
+
+			var createTimer=setInterval(function(){
+				//随机的添加对象的过程，定时器来控制多长时间出来
+           
+			var wolf=document.createElement("img");
+				//创建狼图片的路径src
+				wolf.type=rand(0,100)>87?"x":"h";
+				wolf.index=0;
+
+				wolf.src="img/"+wolf.type+wolf.index+".png";
+
+				
+				
+			   // 下边这里就是避免一个坑里多个对象出现。
+			    var nowWolfs=wolfs.children;
+				var bol=true;   //这里是为了事件的执行
+				while (bol) {
+					var r=rand(0,arrPos.length);//0-9范围   随机的数字
+					//怎么让一个随机数字和一个子节点判断呢？？？
+					for (var i = 0; i < nowWolfs.length; i++) {
+						if (nowWolfs[i].offsetLeft==parseInt(arrPos[r].l)) {
+							break;
+						}
+						
+					}
+					
+					if (i==nowWolfs.length) {
+						
+						bol=false;
+					}
+				}
+
+				
+
+				//设置狼出现的位置
+				wolf.style.left=arrPos[r].l;
+				wolf.style.top=arrPos[r].t;
+				//狼添加到页面
+				wolfs.appendChild(wolf);
+
+
+				//下边就是主要功能就是狼出来的定时器，为什么要加定时器？？、
+				//答案就是要循环图片路径，产生一个动态画面
+
+				
+				wolf.upTimer=setInterval(function(){
+					wolf.index++;
+					//index大于4时候关闭定时器；
+					if (wolf.index>4) {
+						clearInterval(wolf.upTimer);
+						//关闭同时执行下去事件
+						downFn();
+					}
+
+				wolf.src="img/"+wolf.type+wolf.index+".png";
+				}, 150)
+
+
+                //灰太狼消失的事件？？？为什么加定时器呢？？产生动态的效果
+                //也就是图片消失，删除这个img图片 
+		
+				wolf.downTimer=null;
+				function downFn(){
+					wolf.downTimer=setInterval(function(){
+						wolf.index--;
+						// console.log(wolf.index);
+						if (wolf.index<=0) {
+							clearInterval(wolf.downTimer);
+							//达到极限的时候，就关闭定时器，另外要删除元素消失及删除。
+							wolfs.removeChild(wolf);
+						}
+					wolf.src="img/"+wolf.type+wolf.index+".png";
+
+					}, 150)
+
+				} 
+
+				//打中灰太狼的事件，要怎么思考？打中灰太狼的时候，他的头上方会有被打中的样式产生（就是图片），打中就是让其消失。
+				//这里边也用到定时器？？？？？？这是因为它打击的时候也产生一系列动画。
+				//当打击事件产生的时候，他的出现和消失定时器同时关闭。
+				wolf.clickTimer=null;
+				wolf.onclick=function(){
+					//初始化index值
+					wolf.index=5;//拍打的时候是从它上升在最顶端的时候开始。
+					//同时关闭原有的上去和下来的定时器
+					clearInterval(wolf.downTimer);
+					clearInterval(wolf.upTimer);
+//                  if(wolf.type=="x"){
+//								score+=30;
+//						}else{
+//								score+=10;
+//					}
+					scoring.innerHTML=wolf.type=="x"?score+=30:score+=10;
+					wolf.clickTimer=setInterval(function(){
+						wolf.index++;
+						if (wolf.index>=9) {
+							
+							clearInterval(wolf.clickTimer);
+							//删除添加的img
+							wolfs.removeChild(wolf);
+						}
+						wolf.src="img/"+wolf.type+wolf.index+".png";
+						
+					}, 150)
+				}
+				
+				countOffw=countOffw-(180/20);
+               if(countDown.offsetWidth<=0){
+	            	    clearInterval(wolf.downTimer);
+					clearInterval(wolf.upTimer);
+					clearInterval(createTimer);
+		            	menu.style.display="block";
+		            	menu.innerHTML="游戏结束";
+             }
+              countDown.style.width=(countOffw-(180/20))+"px";
+
+			}, 500)
+		}
+	}
+	function rand(min,max) {
+		 return parseInt(Math.random()*(max-min)+min);
+	}
+	</script>
+
+</head>
+<body>
+<div id="outer">
+	<div id="scoring">0</div><!--这是分数-->
+    <div id="countDown"></div><!--倒计时-->
+    <div id="wolfs">
+    	 <!--<img src="img/h5.png"/>--> 
+    </div><!--灰太狼们-->
+    <div id="menu">
+        <a href="#" id="start">开始</a>
+        <a href="#" id="handle">游戏操作说明</a>
+    </div>
+    <div id="gameOver">game over!</div>
+</div>		
+</body>
+</html>
